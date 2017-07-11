@@ -17,18 +17,38 @@ from ipykernel.kernelapp import IPKernelApp
 from IPython.utils.frame import extract_module_locals
 
 
-class ActionHandler(idaapi.action_handler_t):
-    def __init__(self, activation_callback):
-        idaapi.action_handler_t.__init__(self)
-        self._activation_callback = activation_callback
+def add_idaipython_menu(callback):
+    class MyHandler(idaapi.action_handler_t):
+        def __init__(self):
+            idaapi.action_handler_t.__init__(self)
 
-    def activate(self, ctx):
-        self._activation_callback()
+        def activate(self, ctx):
+            callback()
+            return 1
 
-        return 1
+        def update(self, ctx):
+            return idaapi.AST_ENABLE_ALWAYS
 
-    def update(self, ctx):
-        return idaapi.AST_ENABLE_ALWAYS
+    action_name = 'IDAIPython:QtConsole'
+    action_desc = idaapi.action_desc_t(
+        action_name,
+        'IDAIPython QtConsole',
+        MyHandler(),
+        '',
+        'Launch IDAIPython QtConsole',
+        -1)
+
+    idaapi.register_action(action_desc)
+
+    idaapi.attach_action_to_menu(
+        'View/',
+        action_name,
+        idaapi.SETMENU_INS)
+
+    return action_desc
+
+def remove_idaipython_menu():
+    idaapi.detach_action_from_menu('View/IDAIPython QtConsole', 'IDAIPython:QtConsole')
 
 
 class IDAIPython(idaapi.plugin_t):
@@ -42,6 +62,7 @@ class IDAIPython(idaapi.plugin_t):
 
         self.kernel_app = None
         self.qtconsole_action = None
+        self.menu_items = []
         self.qtconsole_processes = []
 
         argv = None
@@ -160,18 +181,18 @@ class IDAIPython(idaapi.plugin_t):
 
     def remove_menus(self):
         if self.qtconsole_action is not None:
+            remove_idaipython_menu()
             idaapi.unregister_action(self.qtconsole_action.name)
 
-    def add_idaipython_menu(self):
-        self.qtconsole_action = idaapi.action_desc_t('IdaIPython:StartQtConsole',
-                                                   'IDAIPython QtConsole',
-                                                     ActionHandler(self.start_qtconsole),
-                                                   '',
-                                                   'IDAIPython QtConsole',
-                                                     -1)
-        idaapi.register_action(self.qtconsole_action)
+        for menu_item in self.menu_items:
+            idaapi.del_menu_item(menu_item)
 
-        idaapi.attach_action_to_menu('View/', self.qtconsole_action.name, idaapi.SETMENU_INS)
+    def add_idaipython_menu(self):
+        try:
+            menu_item = idaapi.add_menu_item('View/', 'IDAIPython QtConsole', '', 0, self.start_qtconsole, tuple())
+            self.menu_items.append(menu_item)
+        except:
+            self.qtconsole_action = add_idaipython_menu(self.start_qtconsole)
 
     def start(self, argv=None):
         try:
