@@ -17,6 +17,20 @@ from ipykernel.kernelapp import IPKernelApp
 from IPython.utils.frame import extract_module_locals
 
 
+class ActionHandler(idaapi.action_handler_t):
+    def __init__(self, activation_callback):
+        idaapi.action_handler_t.__init__(self)
+        self._activation_callback = activation_callback
+
+    def activate(self, ctx):
+        self._activation_callback()
+
+        return 1
+
+    def update(self, ctx):
+        return idaapi.AST_ENABLE_ALWAYS
+
+
 class IDAIPython(idaapi.plugin_t):
     wanted_name = "IDA IPython"
     wanted_hotkey = ""
@@ -27,7 +41,7 @@ class IDAIPython(idaapi.plugin_t):
     def init(self):
 
         self.kernel_app = None
-        self.menu_items = []
+        self.qtconsole_action = None
         self.qtconsole_processes = []
 
         argv = None
@@ -145,12 +159,19 @@ class IDAIPython(idaapi.plugin_t):
             process.kill()
 
     def remove_menus(self):
-        for menu_item in self.menu_items:
-            idaapi.del_menu_item(menu_item)
+        if self.qtconsole_action is not None:
+            idaapi.unregister_action(self.qtconsole_action.name)
 
     def add_idaipython_menu(self):
-        menu_item = idaapi.add_menu_item('View/', 'IDAIPython QtConsole', '', 0, self.start_qtconsole, tuple())
-        self.menu_items.append(menu_item)
+        self.qtconsole_action = idaapi.action_desc_t('IdaIPython:StartQtConsole',
+                                                   'IDAIPython QtConsole',
+                                                     ActionHandler(self.start_qtconsole),
+                                                   '',
+                                                   'IDAIPython QtConsole',
+                                                     -1)
+        idaapi.register_action(self.qtconsole_action)
+
+        idaapi.attach_action_to_menu('View/', self.qtconsole_action.name, idaapi.SETMENU_INS)
 
     def start(self, argv=None):
         try:
