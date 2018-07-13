@@ -1,6 +1,4 @@
 # What's New
-- Improve python plugin load order (prevents crashes when python does not load correctly)
-- Add in safe IDA process termination (Special thanks to @tmr232 for this)
 - Pure Python
 
 # What and Why?
@@ -38,37 +36,13 @@ This plugin should work on all 6.X x86 QT versions of IDA on Windows, Linux, and
 
 ## Basic Installation and QTConsole
 1. Download and extract the [release](https://github.com/james91b/ida_ipython/releases/latest)
-2. Copy `plugin\ida_ipython.py` into IDA's `plugins` directory
+2. Copy `ida_ipython.py` into IDA's `plugins` directory
 4. Launch IDA
 5. Under the `View` menu, click `IDAIPython QtConsole` or
 6. At the command line, start an IPython qtconsole with the kernel instance (outputted in the IDA console) e.g `jupyter qtconsole --existing kernel-4264.json`
 
 ## Using the Notebook
-1. Change the paths to the `idaq.exe` and `idaq64.exe` executables in the `kernel.json` under the `notebook\kernels\ida32`
-    and `notebook\kernels\ida64` directories respectively
-1. Install the kernels using `jupyter-kernelspec install` (e.g. `jupyter-kernelspec install --user notebook\kernels\ida64`)
+1. Change the paths to the `idaq.exe` and `idaq64.exe` executables in the `kernel.json` under the `notebook-kernels\ida32`
+    and `notebook-kernels\ida64` directories respectively (the default is IDA 7.1 on Windows)
+1. Install the kernels using `jupyter-kernelspec install` (e.g. `jupyter-kernelspec install --user notebook-kernels\ida64`)
 1. When starting a notebook, choose the `IDA32` or `IDA64` kernels, depending on your desired IDA version.
-
-# Changelog
-0.5
-- Improve python plugin load order (prevents crashes when python does not load correctly)
-- Add in safe IDA process termination (Special thanks to @tmr232 for this)
-
-0.4
-- Added IDA 6.9 support
-
-0.3
-- 2015-10-04: Running the plugin from the plugins menu or view menu will now launch an IPython QTConsole. Consoles are terminated on exit.
-- 2015-10-04: Only capture standard output and error when executing the kernel
-- 2015-10-21: Improve error reporting
-
-0.2
-- 2015-09-30: Added support for Jupyter (replaces original support for IPython).
-- 2015-10-01: Added support for ida64.
-
-0.1
-- First release
-
-# To do/Future Ideas
-- More examples
-- Create a library for cell/line magic functions specific to IDA
