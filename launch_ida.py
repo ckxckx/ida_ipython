@@ -4,8 +4,6 @@ import os
 
 
 def launch_ida():
-    print sys.argv
-    print str(os.getpid())
     connection_file = sys.argv[1]
     ida_location = sys.argv[2]
     ida_process = subprocess.Popen(
