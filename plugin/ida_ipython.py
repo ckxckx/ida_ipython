@@ -1,3 +1,4 @@
+from __future__ import print_function
 import traceback
 import os
 import sys
@@ -171,8 +172,8 @@ class IDAIPython(idaapi.plugin_t):
                                            close_fds=True)
                 self.qtconsole_processes.append(process)
             else:
-                print "Error: No kernel defined!"
-        except Exception, e:
+                print("Error: No kernel defined!")
+        except Exception as e:
             traceback.print_exc()
 
     def kill_qtconsoles(self):
@@ -218,7 +219,7 @@ class IDAIPython(idaapi.plugin_t):
                 self.add_idaipython_menu()
 
                 return kernel_iteration
-        except Exception, e:
+        except Exception as e:
             traceback.print_exc()
             raise
 
