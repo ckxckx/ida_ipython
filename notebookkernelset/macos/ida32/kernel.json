@@ -1,0 +1,16 @@
+{
+    "display_name": "IDA32",
+    "language": "python",
+    "argv": [
+     "python",
+     "-c",
+     "import sys\r\nimport subprocess\r\nimport os\r\n\r\n\r\ndef launch_ida():\r\n    connection_file = sys.argv[1]\r\n    ida_location = sys.argv[2]\r\n    ida_process = subprocess.Popen(\r\n        [ida_location],\r\n        env=dict(\r\n            PARENT_PROCESS_PID=str(os.getpid()),\r\n            JUPYTER_CONNECTION=connection_file,\r\n            **os.environ\r\n        )\r\n    )\r\n    ida_process.wait()\r\n\r\n\r\nif __name__ == '__main__':\r\n    launch_ida()\r\n",
+     "{connection_file}",
+     "/Applications/IDA Pro 7.5/ida.app/Contents/MacOS/ida"
+    ],
+    "codemirror_mode": {
+     "version": 2,
+     "name": "ipython"
+    }
+   }
+   

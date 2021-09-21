@@ -1,4 +1,3 @@
-from __future__ import print_function
 import traceback
 import os
 import sys
@@ -58,36 +57,49 @@ class IDAIPython(idaapi.plugin_t):
     flags = idaapi.PLUGIN_FIX
     comment = ""
     help = ""
+    connection_file = None
 
-    def init(self):
-
-        self.kernel_app = None
-        self.qtconsole_action = None
-        self.menu_items = []
-        self.qtconsole_processes = []
-
+    def start_kernel(self):
         argv = None
-        connection_file = os.environ.get("JUPYTER_CONNECTION", None)
-        if connection_file:
-            argv = ['-f', connection_file]
-
+        if self.connection_file:
+            argv = ['-f', self.connection_file]
+        print("ckx: start_kernel .....")
         kernel_iteration = self.start(argv)
 
         def timer_callback():
+            # print("timer_callback called...")
             kernel_iteration()
             return int(1000 * self.kernel_app.kernel._poll_interval)
 
         self.timer = idaapi.register_timer(int(1000 * self.kernel_app.kernel._poll_interval), timer_callback)
 
+
+    def init(self):
+        
+        self.kernel_app = None
+        self.qtconsole_action = None
+        self.menu_items = []
+        self.qtconsole_processes = []
+        
+        self.connection_file = os.environ.get("JUPYTER_CONNECTION", None)
+
+        if self.connection_file:
+            print("ckx:>"*99)
+            self.start_kernel()
+        
         return idaapi.PLUGIN_KEEP
 
     def run(self, args):
-        pass
+        if not self.kernel_app:
+            self.start_kernel()
+        else:
+            print ("Kernel already started!")
 
     def term(self):
-        idaapi.unregister_timer(self.timer)
-        self.kill_qtconsoles()
-        self.remove_menus()
+        if self.kernel_app:
+            idaapi.unregister_timer(self.timer)
+            self.kill_qtconsoles()
+            self.remove_menus()
 
     def embed_kernel(self, module=None, local_ns=None, **kwargs):
         """Embed and start an IPython kernel in a given scope.
@@ -107,8 +119,10 @@ class IDAIPython(idaapi.plugin_t):
         """
         # get the app if it exists, or set it up if it doesn't
         if IPKernelApp.initialized():
+            print("ckx ip 1")
             app = IPKernelApp.instance()
         else:
+            print("ckx ip 2")
             app = IPKernelApp.instance(**kwargs)
             app.initialize(sys.argv)
             # Undo unnecessary sys module mangling from init_sys_modules.
@@ -159,9 +173,13 @@ class IDAIPython(idaapi.plugin_t):
     def start_qtconsole(self):
         try:
             if self.kernel_app:
+                print("ckx:-------------"*88)
+                print (self.kernel_app.connection_file)
+
                 python_directory = self.find_python_dir()
+                print(python_directory)
                 cmd_line = [
-                    "{}/pythonw".format(python_directory),
+                    "{}/../bin/python3".format(python_directory),
                     "-m", "qtconsole",
                     "--existing", self.kernel_app.connection_file
                 ]
@@ -172,7 +190,7 @@ class IDAIPython(idaapi.plugin_t):
                                            close_fds=True)
                 self.qtconsole_processes.append(process)
             else:
-                print("Error: No kernel defined!")
+                print ("Error: No kernel defined!")
         except Exception as e:
             traceback.print_exc()
 
@@ -196,11 +214,16 @@ class IDAIPython(idaapi.plugin_t):
             self.qtconsole_action = add_idaipython_menu(self.start_qtconsole)
 
     def start(self, argv=None):
+        print("ckx: start ....1")
+        print(argv)
+        print("ckx: before start try")
         try:
             with self.capture_output_streams():
+                print("ckx: start ....2")
                 if argv:
                     sys.argv = argv
-
+                print("ckx: before embed_kerenl")
+                print(argv)
                 self.kernel_app = self.embed_kernel(module=__main__, local_ns={})
                 """
                  Starting with  ipython 4.2.0 whenever certain exceptions are thrown, there is a call to get_terminal_size().
@@ -220,6 +243,7 @@ class IDAIPython(idaapi.plugin_t):
 
                 return kernel_iteration
         except Exception as e:
+            print("ckx: start ....3")
             traceback.print_exc()
             raise
 
